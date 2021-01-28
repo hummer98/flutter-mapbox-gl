@@ -139,31 +139,28 @@ class MapboxMapController extends MapboxGlPlatform
   }
 
   @override
-  Future<List<Symbol>> addSymbols(List<SymbolOptions> options, [List<Map> data]) async {
-    Map<String, SymbolOptions> optionsById = Map.fromIterable(
-      options,
-      key: (o) => symbolManager.add(
-          Feature(
-            geometry: Geometry(
-              type: 'Point',
-              coordinates: [o.geometry.longitude, o.geometry.latitude],
-            ),
-          )
-      ),
-      value: (o) => o
-    );
+  Future<List<Symbol>> addSymbols(List<SymbolOptions> options,
+      [List<Map> data]) async {
+    Map<String, SymbolOptions> optionsById = Map.fromIterable(options,
+        key: (o) => symbolManager.add(Feature(
+              geometry: Geometry(
+                type: 'Point',
+                coordinates: [o.geometry.longitude, o.geometry.latitude],
+              ),
+            )),
+        value: (o) => o);
     symbolManager.updateAll(optionsById);
-    
-    return optionsById.map(
-        (id, singleOptions) {
+
+    return optionsById
+        .map((id, singleOptions) {
           int dataIndex = options.indexOf(singleOptions);
-          Map singleData = data != null && data.length >= dataIndex + 1 ? data[dataIndex] : null;
-          return MapEntry(
-            id,
-            Symbol(id, singleOptions, singleData)
-          );
-        }
-    ).values.toList();
+          Map singleData = data != null && data.length >= dataIndex + 1
+              ? data[dataIndex]
+              : null;
+          return MapEntry(id, Symbol(id, singleOptions, singleData));
+        })
+        .values
+        .toList();
   }
 
   @override
@@ -331,8 +328,8 @@ class MapboxMapController extends MapboxGlPlatform
   }
 
   void _onStyleLoaded(_) {
-    symbolManager = SymbolManager(map: _map, onTap: onSymbolTappedPlatform);
     lineManager = LineManager(map: _map, onTap: onLineTappedPlatform);
+    symbolManager = SymbolManager(map: _map, onTap: onSymbolTappedPlatform);
     circleManager = CircleManager(map: _map, onTap: onCircleTappedPlatform);
     onMapStyleLoadedPlatform(null);
     _map.on('click', _onMapClick);
@@ -413,7 +410,14 @@ class MapboxMapController extends MapboxGlPlatform
     );
     _geolocateControl.on('geolocate', (e) {
       _myLastLocation = LatLng(e.coords.latitude, e.coords.longitude);
-      onUserLocationUpdatedPlatform(UserLocation(position: LatLng(e.coords.latitude, e.coords.longitude), altitude: e.coords.altitude, bearing: e.coords.heading, speed: e.coords.speed, horizontalAccuracy: e.coords.accuracy, verticalAccuracy: e.coords.altitudeAccuracy, timestamp: DateTime.fromMillisecondsSinceEpoch(e.timestamp)));
+      onUserLocationUpdatedPlatform(UserLocation(
+          position: LatLng(e.coords.latitude, e.coords.longitude),
+          altitude: e.coords.altitude,
+          bearing: e.coords.heading,
+          speed: e.coords.speed,
+          horizontalAccuracy: e.coords.accuracy,
+          verticalAccuracy: e.coords.altitudeAccuracy,
+          timestamp: DateTime.fromMillisecondsSinceEpoch(e.timestamp)));
     });
     _geolocateControl.on('trackuserlocationstart', (_) {
       _onCameraTrackingChanged(true);
@@ -556,7 +560,7 @@ class MapboxMapController extends MapboxGlPlatform
 
   @override
   void setMyLocationTrackingMode(int myLocationTrackingMode) {
-    if(_geolocateControl==null){
+    if (_geolocateControl == null) {
       //myLocationEnabled is false, ignore myLocationTrackingMode
       return;
     }
@@ -632,21 +636,23 @@ class MapboxMapController extends MapboxGlPlatform
 
   @override
   Future<Point> toScreenLocation(LatLng latLng) async {
-    var screenPosition = _map.project(LngLat(latLng.longitude, latLng.latitude));
+    var screenPosition =
+        _map.project(LngLat(latLng.longitude, latLng.latitude));
     return Point(screenPosition.x.round(), screenPosition.y.round());
   }
 
   @override
   Future<LatLng> toLatLng(Point screenLocation) async {
-    var lngLat = _map.unproject(mapbox.Point(screenLocation.x, screenLocation.y));
+    var lngLat =
+        _map.unproject(mapbox.Point(screenLocation.x, screenLocation.y));
     return LatLng(lngLat.lat, lngLat.lng);
   }
 
   @override
-  Future<double> getMetersPerPixelAtLatitude(double latitude) async{
+  Future<double> getMetersPerPixelAtLatitude(double latitude) async {
     //https://wiki.openstreetmap.org/wiki/Zoom_levels
     var circumference = 40075017.686;
     var zoom = _map.getZoom();
-    return circumference * cos(latitude * (pi/180)) / pow(2, zoom + 9);
+    return circumference * cos(latitude * (pi / 180)) / pow(2, zoom + 9);
   }
 }
